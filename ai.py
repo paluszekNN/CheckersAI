@@ -137,7 +137,23 @@ def random_play(game):
     return random.choice(moves)
 
 
-def convert_move(move):
+def encoding_move(move):
+    enc_move = None
+    if move[0] % 2 == 0:
+        move[1] = int((move[1] - 1) / 2)
+    else:
+        move[1] = int(move[1] / 2)
+    
+    if move[2] % 2 == 0:
+        move[3] = int((move[3] - 1) / 2)
+    else:
+        move[3] = int(move[3] / 2)
+
+    move32 = move[0] * 4 + move[1], move[2] * 4 + move[3]
+    enc_move = move32[0] * move32[1]
+    return enc_move
+
+def decoding_move(move):
     x = int(move/32)
     y = move % 32
     Y_col = 0
@@ -167,7 +183,7 @@ def play(game, pmodel, vmodel, gamma, max_moves):
         move = pmodel.sample_action(board)
         prev_board = board
         if game.turn == 1:
-            game.move(convert_move(move))
+            game.move(decoding_move(move))
             board = transform_board(game)
         else:
             game.move(random_play(game))
