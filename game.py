@@ -17,7 +17,7 @@ class Checkers:
         self.list_captures = []
         self.must_capture = False
         self.count_movement = 0
-        self.win = None
+        self.win = 0
         self.moves = []
 
     def convert_move(self, move):
@@ -46,7 +46,7 @@ class Checkers:
         self.list_captures = []
         self.must_capture = False
         self.count_movement = 0
-        self.win = None
+        self.win = 0
 
     def is_empty(self, field):
         return True if self.board_state[field[0], field[1]] == 0 else False

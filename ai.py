@@ -198,10 +198,11 @@ def play(game, pmodel, vmodel, gamma):
             board = transform_board(game)
         else:
             game.move(random_play(game))
-            continue
-
-        if game.win:
             reward = game.win
+            if not reward:
+                continue
+
+        reward = game.win
         V_next = vmodel.predict(board)
         G = reward + gamma * np.max(V_next)
         advantage = G - vmodel.predict(prev_board)
