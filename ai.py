@@ -72,9 +72,17 @@ class PolicyModel:
         X = np.atleast_2d(X)
         return self.session.run(self.predict_op, feed_dict={self.X: X})
 
-    def sample_action(self, X):
+    def sample_action(self, X, moves):
         p = self.predict(X)[0]
-        return np.random.choice(len(p), p=p)
+
+        index = []
+        mov = []
+        for move in moves:
+            mov.append(p[encoding_move(move)])
+            index.append(encoding_move(move))
+
+
+        return index[np.argmax(mov)]
 
 
 class ValueModel:
@@ -139,48 +147,51 @@ def random_play(game):
 
 def encoding_move(move):
     enc_move = None
+    new_move = [move[0], 0, move[2], 0]
     if move[0] % 2 == 0:
-        move[1] = int((move[1] - 1) / 2)
+        new_move[1] = int((move[1] - 1) / 2)
     else:
-        move[1] = int(move[1] / 2)
-    
-    if move[2] % 2 == 0:
-        move[3] = int((move[3] - 1) / 2)
-    else:
-        move[3] = int(move[3] / 2)
+        new_move[1] = int(move[1] / 2)
 
-    move32 = move[0] * 4 + move[1], move[2] * 4 + move[3]
-    enc_move = move32[0] * move32[1]
+    if move[2] % 2 == 0:
+        new_move[3] = int((move[3] - 1) / 2)
+    else:
+        new_move[3] = int(move[3] / 2)
+
+    move32 = new_move[0] * 4 + new_move[1], new_move[2] * 4 + new_move[3]
+    enc_move = move32[0] * 32 + move32[1]
     return enc_move
+
 
 def decoding_move(move):
     x = int(move/32)
     y = move % 32
     Y_col = 0
     X_col = 0
-    X_row = x % 8
-    Y_row = y % 8
+    X_row = int(x / 4)
+    Y_row = int(y / 4)
 
     if X_row % 2 == 0:
-        X_col = 2 * int(x / 8) + 1
+        X_col = 2 * int(x % 4) + 1
     else:
-        X_col = 2 * int(x / 8)
+        X_col = 2 * int(x % 4)
 
     if Y_row % 2 == 0:
-        Y_col = 2 * int(y / 8) + 1
+        Y_col = 2 * int(y % 4) + 1
     else:
-        Y_col = 2 * int(y / 8)
+        Y_col = 2 * int(y % 4)
 
     return X_row, X_col, Y_row, Y_col
 
 
-def play(game, pmodel, vmodel, gamma, max_moves):
+def play(game, pmodel, vmodel, gamma):
     game.reset()
     board = transform_board(game)
     reward = 0
 
     while not game.win:
-        move = pmodel.sample_action(board)
+        game.available_moves()
+        move = pmodel.sample_action(board, game.moves)
         prev_board = board
         if game.turn == 1:
             game.move(decoding_move(move))
@@ -197,13 +208,10 @@ def play(game, pmodel, vmodel, gamma, max_moves):
         pmodel.partial_fit(prev_board, move, advantage)
         vmodel.partial_fit(prev_board, G)
 
-    if max_moves < game.count_movement:
-        max_moves = game.count_movement
-    return reward, max_moves
+    return reward
 
 
 if __name__ == '__main__':
-    max_moves = 0
     game = Checkers()
     D = len(transform_board(game))
     K = 32*32
@@ -214,11 +222,17 @@ if __name__ == '__main__':
     session.run(init)
     pmodel.set_session(session)
     vmodel.set_session(session)
+    totalrewards = 0
     gamma = 0.99
-
-    while True:
-        totalreward, max_moves = play(game, pmodel, vmodel, gamma, max_moves)
-
-        if totalreward == 1:
-            break
-    print(max_moves)
+    N = 1000
+    while N:
+        totalreward = play(game, pmodel, vmodel, gamma)
+        N -= 1
+        if (N%10==0):
+            print(N)
+    N = 100
+    while N:
+        totalreward = play(game, pmodel, vmodel, gamma)
+        N -= 1
+        totalrewards += totalreward
+    print(totalrewards)
