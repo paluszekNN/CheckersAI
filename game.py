@@ -103,9 +103,9 @@ class Checkers:
     def who_win(self):
         self.available_moves()
         if self.moves_queen_with_out_capture == 15:
-            self.win = 0
-        if not self.list_captures and not self.list_moves:
             self.win = -self.turn
+        if not self.list_captures and not self.list_moves:
+            self.win = -self.turn*2
 
     def available_moves(self):
         self.moves = []

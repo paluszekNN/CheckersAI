@@ -215,8 +215,8 @@ if __name__ == '__main__':
     game = Checkers()
     D = len(transform_board(game))
     K = 32*32
-    pmodel = PolicyModel(D, K, [32, 32, 32])
-    vmodel = ValueModel(D, [32, 32, 32])
+    pmodel = PolicyModel(D, K, [100, 100, 100])
+    vmodel = ValueModel(D, [100, 100, 100])
     init = tf.global_variables_initializer()
     session = tf.InteractiveSession()
     session.run(init)
