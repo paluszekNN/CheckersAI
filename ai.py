@@ -50,7 +50,7 @@ class PolicyModel:
 
         cost = -tf.reduce_sum(self.advantages * selected_probs)
 
-        self.train_op = tf.train.AdamOptimizer(1e-4).minimize(cost)
+        self.train_op = tf.train.AdamOptimizer(1e-2).minimize(cost)
 
     def set_session(self, session):
         self.session = session
@@ -107,7 +107,7 @@ class ValueModel:
         self.predict_op = Y_hat
 
         cost = tf.reduce_sum(tf.square(self.Y - Y_hat))
-        self.train_op = tf.train.AdamOptimizer(1e-4).minimize(cost)
+        self.train_op = tf.train.AdamOptimizer(1e-2).minimize(cost)
 
     def set_session(self, session):
         self.session = session
@@ -223,9 +223,9 @@ if __name__ == '__main__':
     session.run(init)
     pmodel.set_session(session)
     vmodel.set_session(session)
-    totalrewards = 0
+    wins = 0
     gamma = 0.99
-    N = 1000
+    N = 10000
     while N:
         totalreward = play(game, pmodel, vmodel, gamma)
         N -= 1
@@ -235,5 +235,6 @@ if __name__ == '__main__':
     while N:
         totalreward = play(game, pmodel, vmodel, gamma)
         N -= 1
-        totalrewards += totalreward
-    print(totalrewards)
+        if totalreward == 2:
+            wins += 1
+    print(wins)
