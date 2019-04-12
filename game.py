@@ -100,10 +100,10 @@ class Checkers:
         self.count_movement += 1
         self.turn *= -1
 
-    def who_win(self):
+    def who_win(self, ai=1):
         self.available_moves()
         if self.moves_queen_with_out_capture == 15:
-            self.win = -self.turn
+            self.win = -ai
         if not self.list_captures and not self.list_moves:
             self.win = -self.turn*2
 

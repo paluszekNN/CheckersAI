@@ -2,10 +2,11 @@ import tensorflow as tf
 from game import Checkers
 import numpy as np
 import random
+import min_max
 
 
 class HiddenLayer:
-    def __init__(self, M1, M2, function=tf.nn.tanh, use_bias=True): # Use relu function if doesn't work
+    def __init__(self, M1, M2, function=tf.nn.tanh, use_bias=True):
         self.W = tf.Variable(tf.random_normal(shape=(M1, M2)))
         self.use_bias = use_bias
         if use_bias:
@@ -50,7 +51,7 @@ class PolicyModel:
 
         cost = -tf.reduce_sum(self.advantages * selected_probs)
 
-        self.train_op = tf.train.AdamOptimizer(1e-2).minimize(cost)
+        self.train_op = tf.train.AdamOptimizer(1e-4).minimize(cost)
 
     def set_session(self, session):
         self.session = session
@@ -81,8 +82,11 @@ class PolicyModel:
             mov.append(p[encoding_move(move)])
             index.append(encoding_move(move))
 
-
         return index[np.argmax(mov)]
+        # mov = np.array(mov)
+        # mov = mov / mov.sum()
+        #
+        # return index[np.random.choice(len(mov), p=mov)]
 
 
 class ValueModel:
@@ -197,7 +201,12 @@ def play(game, pmodel, vmodel, gamma):
             game.move(decoding_move(move))
             board = transform_board(game)
         else:
-            game.move(random_play(game))
+            new_game = Checkers()
+            new_game.board_state = np.array(game.board_state)
+            new_game.turn = game.turn
+            new_game.moves_queen_with_out_capture = game.moves_queen_with_out_capture
+            move = min_max.min_max_player(new_game, new_game.turn)
+            game.move(move)
             reward = game.win
             if not reward:
                 continue
@@ -216,8 +225,10 @@ if __name__ == '__main__':
     game = Checkers()
     D = len(transform_board(game))
     K = 32*32
-    pmodel = PolicyModel(D, K, [100, 100, 100])
-    vmodel = ValueModel(D, [100, 100, 100])
+    pmodel = PolicyModel(D, K, [])
+    vmodel = ValueModel(D, [256])
+    # best_pmodel = PolicyModel(D, K, [100, 100, 100])
+    # best_vmodel = ValueModel(D, [100, 100, 100])
     init = tf.global_variables_initializer()
     session = tf.InteractiveSession()
     session.run(init)
@@ -225,7 +236,7 @@ if __name__ == '__main__':
     vmodel.set_session(session)
     wins = 0
     gamma = 0.99
-    N = 10000
+    N = 100
     while N:
         totalreward = play(game, pmodel, vmodel, gamma)
         N -= 1
