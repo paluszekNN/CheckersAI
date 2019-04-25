@@ -55,7 +55,7 @@ class Checkers:
         next = True
         self.available_moves()
         if move not in self.moves:
-            self.win = -self.turn*200
+            self.win = -self.turn
         if move in self.list_moves:
             if self.board_state[move[0], move[1]] == self.turn*2:
                 self.moves_queen_with_out_capture += 1
