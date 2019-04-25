@@ -118,10 +118,10 @@ class DQN:
             ops.append(op)
         self.session.run(ops)
 
-    def save(self):
+    def save(self, i):
         params = [t for t in tf.trainable_variables() if t.name.startswith(self.name)]
         params = self.session.run(params)
-        np.savez('tf_dqn_weights.npz', *params)
+        np.savez('tf_dqn_weights'+str(i)+'.npz', *params)
 
     def load(self):
         params = [t for t in tf.trainable_variables() if t.name.startswith(self.name)]
@@ -345,17 +345,15 @@ if __name__ == '__main__':
 
     epsilon = 1.0
     epsilon_min = 0.001
-    epsilon_change = (epsilon - epsilon_min) / MAX_EXPERIENCES
+    epsilon_change = (epsilon - epsilon_min) / num_episodes
 
     model = DQN(input_size, action_space_size, conv_layer_sizes, hidden_layer_sizes, 'model')
     target_model = DQN(input_size, action_space_size, conv_layer_sizes, hidden_layer_sizes, 'target_model')
-
     with tf.Session() as session:
         # model.load()
         model.set_session(session)
         target_model.set_session(session)
         session.run(tf.global_variables_initializer())
-
         game.reset()
 
         wins = 0
@@ -401,6 +399,8 @@ if __name__ == '__main__':
                   "Epsilon:", "%.3f" % epsilon
                   )
             sys.stdout.flush()
+            if i % 500 == 0 and i != 0:
+                model.save(i)
         print("Total duration:", datetime.now() - t0)
 
-        model.save()
+        model.save('last')
