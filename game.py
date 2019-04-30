@@ -116,36 +116,57 @@ class Checkers:
                 if row>0:
                     if self.board_state[row, col] == 1 and self.turn == 1:
                         if col>0 and self.is_empty((row-1, col-1)):
-                            self.list_moves.append((row,col,row-1,col-1))
+                            self.list_moves.append((row, col, row-1, col-1))
                         if col<7 and self.is_empty((row-1, col+1)):
-                            self.list_moves.append((row,col,row-1,col+1))
+                            self.list_moves.append((row, col, row-1, col+1))
                 if row<7:
                     if self.board_state[row, col] == -1 and self.turn == -1:
                         if col>0 and self.is_empty((row+1, col-1)):
-                            self.list_moves.append((row,col,row+1,col-1))
+                            self.list_moves.append((row, col, row+1, col-1))
                         if col<7 and self.is_empty((row+1, col+1)):
-                            self.list_moves.append((row,col,row+1,col+1))
+                            self.list_moves.append((row, col, row+1, col+1))
 
-                if self.board_state[row, col] == self.turn:
+                if self.board_state[row, col] == 1 and self.turn == 1:
                     if row>1:
-                        if col>1 and self.is_empty((row-2, col-2)) and \
-                                (self.board_state[row-1, col-1] == -self.turn or self.board_state[row-1, col-1] == -self.turn*2):
+                        if col>1 and self.is_empty((row-2, col-self.turn*2)) and \
+                                (self.board_state[row-1, col-self.turn] == -self.turn or self.board_state[row-1, col-self.turn] == -self.turn*2):
                             self.must_capture = True
-                            self.list_captures.append((row,col,row-2,col-2))
-                        if col<6 and self.is_empty((row-2, col+2)) and \
-                                (self.board_state[row-1, col+1] == -self.turn or self.board_state[row-1, col+1] == -self.turn*2):
+                            self.list_captures.append((row, col, row-2, col-self.turn*2))
+                        if col<6 and self.is_empty((row-2, col-self.turn*2)) and \
+                                (self.board_state[row-1, col-self.turn] == -self.turn or self.board_state[row-1, col-self.turn] == -self.turn*2):
                             self.must_capture = True
-                            self.list_captures.append((row,col,row-2,col+2))
+                            self.list_captures.append((row, col, row-2, col-self.turn*2))
 
                     if row<6:
-                        if col>1 and self.is_empty((row+2, col-2)) and \
-                                (self.board_state[row+1, col-1] == -self.turn or self.board_state[row+1, col-1] == -self.turn*2):
+                        if col>1 and self.is_empty((row+2, col-self.turn*2)) and \
+                                (self.board_state[row+1, col-self.turn] == -self.turn or self.board_state[row+1, col-self.turn] == -self.turn*2):
                             self.must_capture = True
-                            self.list_captures.append((row,col,row+2,col-2))
-                        if col<6 and self.is_empty((row+2, col+2)) and \
-                                (self.board_state[row+1, col+1] == -self.turn or self.board_state[row+1, col+1] == -self.turn*2):
+                            self.list_captures.append((row,col,row+2,col-self.turn*2))
+                        if col<6 and self.is_empty((row+2, col-self.turn*2)) and \
+                                (self.board_state[row+1, col-self.turn] == -self.turn or self.board_state[row+1, col-self.turn] == -self.turn*2):
                             self.must_capture = True
-                            self.list_captures.append((row,col,row+2,col+2))
+                            self.list_captures.append((row, col, row+2, col-self.turn*2))
+
+                if self.board_state[row, col] == self.turn and self.turn == -1:
+                    if row>1:
+                        if col>1 and self.is_empty((row-2, col+self.turn*2)) and \
+                                (self.board_state[row-1, col+self.turn] == -self.turn or self.board_state[row-1, col+self.turn] == -self.turn*2):
+                            self.must_capture = True
+                            self.list_captures.append((row, col, row-2, col+self.turn*2))
+                        if col<6 and self.is_empty((row-2, col+self.turn*2)) and \
+                                (self.board_state[row-1, col+self.turn] == -self.turn or self.board_state[row-1, col+self.turn] == -self.turn*2):
+                            self.must_capture = True
+                            self.list_captures.append((row, col, row-2, col+self.turn*2))
+
+                    if row<6:
+                        if col>1 and self.is_empty((row+2, col+self.turn*2)) and \
+                                (self.board_state[row+1, col+self.turn] == -self.turn or self.board_state[row+1, col+self.turn] == -self.turn*2):
+                            self.must_capture = True
+                            self.list_captures.append((row,col,row+2,col+self.turn*2))
+                        if col<6 and self.is_empty((row+2, col+self.turn*2)) and \
+                                (self.board_state[row+1, col+self.turn] == -self.turn or self.board_state[row+1, col+self.turn] == -self.turn*2):
+                            self.must_capture = True
+                            self.list_captures.append((row, col, row+2, col+self.turn*2))
 
                 if self.board_state[row, col] == self.turn*2:
                     if row>0:

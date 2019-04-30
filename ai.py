@@ -7,9 +7,9 @@ from datetime import datetime
 import sys
 
 
-MAX_EXPERIENCES = 100000
-MIN_EXPERIENCES = 10000
-TARGET_UPDATE_PERIOD = 10000
+MAX_EXPERIENCES = 500000
+MIN_EXPERIENCES = 50000
+TARGET_UPDATE_PERIOD = 100
 
 
 class ReplayMemory:
@@ -333,7 +333,7 @@ if __name__ == '__main__':
     input_size = game.board_state.shape
     action_space_size = 32 * 32
     conv_layer_sizes = [(128, 2, 1), (128, 2, 1), (128, 2, 1)]
-    hidden_layer_sizes = [128]
+    hidden_layer_sizes = [256]
 
     gamma = 0.99
     batch_sz = 32
