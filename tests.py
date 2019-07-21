@@ -9,7 +9,7 @@ class TestBoard(unittest.TestCase):
         self.test_Game = Checkers()
 
     def test_move(self):
-        self.test_Game.move('a6 b5')
+        self.test_Game.move((5, 0, 4, 1))
         print('move')
         expected_result = np.array([[0, -1, 0, -1, 0, -1, 0, -1],
                          [-1, 0, -1, 0, -1, 0, -1, 0],
@@ -33,8 +33,8 @@ class TestBoard(unittest.TestCase):
                          [0, 1, 0, 1, 0, 1, 0, 1],
                          [1, 0, 1, 0, 1, 0, 1, 0]])
 
-        self.test_Game.move('b5 d3')
-        self.test_Game.move('d3 f5')
+        self.test_Game.move((4, 1, 2, 3))
+        self.test_Game.move((2, 3, 4, 5))
 
         expected_result = np.array([[0, -1, 0, -1, 0, -1, 0, -1],
                                     [-1, 0, -1, 0, -1, 0, -1, 0],
