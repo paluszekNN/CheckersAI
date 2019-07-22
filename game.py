@@ -132,20 +132,20 @@ class Checkers:
                                 (self.board_state[row-1, col-self.turn] == -self.turn or self.board_state[row-1, col-self.turn] == -self.turn*2):
                             self.must_capture = True
                             self.list_captures.append((row, col, row-2, col-self.turn*2))
-                        if col<6 and self.is_empty((row-2, col-self.turn*2)) and \
-                                (self.board_state[row-1, col-self.turn] == -self.turn or self.board_state[row-1, col-self.turn] == -self.turn*2):
+                        if col<6 and self.is_empty((row-2, col+self.turn*2)) and \
+                                (self.board_state[row-1, col+self.turn] == -self.turn or self.board_state[row-1, col+self.turn] == -self.turn*2):
                             self.must_capture = True
-                            self.list_captures.append((row, col, row-2, col-self.turn*2))
+                            self.list_captures.append((row, col, row-2, col+self.turn*2))
 
                     if row<6:
                         if col>1 and self.is_empty((row+2, col-self.turn*2)) and \
                                 (self.board_state[row+1, col-self.turn] == -self.turn or self.board_state[row+1, col-self.turn] == -self.turn*2):
                             self.must_capture = True
                             self.list_captures.append((row,col,row+2,col-self.turn*2))
-                        if col<6 and self.is_empty((row+2, col-self.turn*2)) and \
-                                (self.board_state[row+1, col-self.turn] == -self.turn or self.board_state[row+1, col-self.turn] == -self.turn*2):
+                        if col<6 and self.is_empty((row+2, col+self.turn*2)) and \
+                                (self.board_state[row+1, col+self.turn] == -self.turn or self.board_state[row+1, col+self.turn] == -self.turn*2):
                             self.must_capture = True
-                            self.list_captures.append((row, col, row+2, col-self.turn*2))
+                            self.list_captures.append((row, col, row+2, col+self.turn*2))
 
                 if self.board_state[row, col] == self.turn and self.turn == -1:
                     if row>1:
