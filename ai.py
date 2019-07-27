@@ -290,12 +290,13 @@ def play_one(game, total_t, experience_replay_buffer, model, target_model, gamma
             total_t, TARGET_UPDATE_PERIOD))
 
         # Take action
-        game.available_moves()
-        states, _, _, _, _ = experience_replay_buffer.get_minibatch()
-        move = model.sample_action(states, epsilon)
-        prev_board = board
-        game.move(decoding_move(move))
-        if game.win == 0:
+        if game.turn == 1:
+            game.available_moves()
+            states, _, _, _, _ = experience_replay_buffer.get_minibatch()
+            move = model.sample_action(states, epsilon)
+            prev_board = board
+            game.move(decoding_move(move))
+        if game.win == 0 and game.turn == -1:
             new_game = Checkers()
             new_game.board_state = np.array(game.board_state)
             new_game.turn = game.turn
@@ -337,7 +338,7 @@ if __name__ == '__main__':
 
     gamma = 0.99
     batch_sz = 32
-    num_episodes = 3500
+    num_episodes = 10000
     total_t = 0
 
     experience_replay_buffer = ReplayMemory(input_size)

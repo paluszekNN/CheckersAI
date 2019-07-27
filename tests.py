@@ -34,13 +34,12 @@ class TestBoard(unittest.TestCase):
                          [1, 0, 1, 0, 1, 0, 1, 0]])
 
         self.test_Game.move((4, 1, 2, 3))
-        self.test_Game.move((2, 3, 4, 5))
 
         expected_result = np.array([[0, -1, 0, -1, 0, -1, 0, -1],
                                     [-1, 0, -1, 0, -1, 0, -1, 0],
-                                    [0, -1, 0, 0, 0, -1, 0, -1],
+                                    [0, -1, 0, 1, 0, -1, 0, -1],
+                                    [0, 0, 0, 0, -1, 0, 0, 0],
                                     [0, 0, 0, 0, 0, 0, 0, 0],
-                                    [0, 0, 0, 0, 0, 1, 0, 0],
                                     [0, 0, 1, 0, 1, 0, 1, 0],
                                     [0, 1, 0, 1, 0, 1, 0, 1],
                                     [1, 0, 1, 0, 1, 0, 1, 0]])
@@ -68,6 +67,31 @@ class TestBoard(unittest.TestCase):
                                                [0, 0, 1, 0, 1, 0, 1, 0],
                                                [0, 1, 0, 1, 0, 1, 0, 1],
                                                [1, 0, 1, 0, 1, 0, 1, 0]])
+
+        np.testing.assert_array_equal(expected_result, self.test_Game.board_state)
+
+        self.test_Game.reset()
+        print("capture from first col")
+        self.test_Game.turn = -1
+        self.test_Game.board_state = np.array([[0, -1, 0, -1, 0, -1, 0, -1],
+                                               [-1, 0, -1, 0, -1, 0, -1, 0],
+                                               [0, -1, 0, 0, 0, -1, 0, -1],
+                                               [-1, 0, -1, 0, -1, 0, 0, 0],
+                                               [0, 1, 0, 0, 0, 0, 0, 0],
+                                               [0, 0, 0, 0, 1, 0, 1, 0],
+                                               [0, 1, 0, 1, 0, 1, 0, 1],
+                                               [1, 0, 1, 0, 1, 0, 1, 0]])
+
+        self.test_Game.move((3, 0, 5, 2))
+
+        expected_result = np.array([[0, -1, 0, -1, 0, -1, 0, -1],
+                                   [-1, 0, -1, 0, -1, 0, -1, 0],
+                                   [0, -1, 0, 0, 0, -1, 0, -1],
+                                   [0, 0, -1, 0, -1, 0, 0, 0],
+                                   [0, 0, 0, 0, 0, 0, 0, 0],
+                                   [0, 0, -1, 0, 1, 0, 1, 0],
+                                   [0, 1, 0, 1, 0, 1, 0, 1],
+                                   [1, 0, 1, 0, 1, 0, 1, 0]])
 
         np.testing.assert_array_equal(expected_result, self.test_Game.board_state)
 
