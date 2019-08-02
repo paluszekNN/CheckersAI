@@ -333,25 +333,20 @@ def play_one(total_t, experience_replay_buffer, model, target_model, gamma, epsi
 
 
 if __name__ == '__main__':
-    input_size = GAME.board_state.shape
-    action_space_size = 32 * 32
-    conv_layer_sizes = [(64, 2, 1), (64, 2, 1), (64, 2, 1)]
-    hidden_layer_sizes = [64]
-
     gamma = 0.99
     batch_sz = 32
     num_episodes = 10000
     total_t = 0
 
-    experience_replay_buffer = ReplayMemory(input_size)
+    experience_replay_buffer = ReplayMemory(INPUT_SIZE)
     episode_rewards = np.zeros(num_episodes)
 
     epsilon = 1.0
     epsilon_min = 0.001
     epsilon_change = (epsilon - epsilon_min) / num_episodes
 
-    model = DQN(input_size, action_space_size, conv_layer_sizes, hidden_layer_sizes, 'model')
-    target_model = DQN(input_size, action_space_size, conv_layer_sizes, hidden_layer_sizes, 'target_model')
+    model = DQN(INPUT_SIZE, ACTION_SPACE_SIZE, CONV_LAYER_SIZE, HIDDEN_LAYER_SIZE, 'model')
+    target_model = DQN(INPUT_SIZE, ACTION_SPACE_SIZE, CONV_LAYER_SIZE, HIDDEN_LAYER_SIZE, 'target_model')
     with tf.Session() as session:
         # model.load('tf_dqn_weights1.npz')
         model.set_session(session)
