@@ -7,13 +7,14 @@ from datetime import datetime
 import sys
 
 
+game = Checkers()
 MAX_EXPERIENCES = 500000
 MIN_EXPERIENCES = 50000
 TARGET_UPDATE_PERIOD = 100
 
 
 class ReplayMemory:
-    def __init__(self, input_size, agent_history_length=4, batch_size=32, size=MAX_EXPERIENCES):
+    def __init__(self, input_size, agent_history_length=1, batch_size=32, size=MAX_EXPERIENCES):
         self.size = size
         self.input_size = input_size
         self.agent_history_length = agent_history_length
@@ -83,7 +84,7 @@ class DQN:
         self.name = name
 
         with tf.variable_scope(name):
-            self.input = tf.placeholder(tf.float32, shape=(None, 4, input_size[0], input_size[1]), name='input')
+            self.input = tf.placeholder(tf.float32, shape=(None, 1, input_size[0], input_size[1]), name='input')
 
             self.G = tf.placeholder(tf.float32, shape=(None,), name='G')
             self.actions = tf.placeholder(tf.int32, shape=(None,), name='actions')
@@ -91,7 +92,8 @@ class DQN:
             Z = self.input / 2.
             for num_output_filters, filter_size, pool_size in conv_layer_sizes:
                 Z = tf.layers.conv2d(Z, num_output_filters, filter_size, activation=tf.nn.relu)
-                Z = tf.layers.max_pooling2d(Z, pool_size, 1)
+                Z = tf.layers.batch_normalization(Z, axis=1)
+                Z = tf.nn.leaky_relu(Z)
 
             Z = tf.layers.flatten(Z)
             for layer_size in hidden_layer_sizes:
@@ -102,7 +104,7 @@ class DQN:
             selected_action_values = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions, action_space_size), reduction_indices=[1])
 
             cost = tf.reduce_mean(tf.losses.huber_loss(self.G, selected_action_values))
-            self.train_op = tf.train.AdamOptimizer(1e-3).minimize(cost)
+            self.train_op = tf.train.AdamOptimizer(1e-6).minimize(cost)
 
             self.cost = cost
 
@@ -330,10 +332,9 @@ def play_one(game, total_t, experience_replay_buffer, model, target_model, gamma
 
 
 if __name__ == '__main__':
-    game = Checkers()
     input_size = game.board_state.shape
     action_space_size = 32 * 32
-    conv_layer_sizes = [(128, 2, 1), (128, 2, 1), (128, 2, 1)]
+    conv_layer_sizes = [(128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1)]
     hidden_layer_sizes = [256]
 
     gamma = 0.99

@@ -43,6 +43,6 @@ def min_max_alpha_beta(game, turn, max_depth, alpha=-sys.float_info.max, beta=sy
 
 
 def min_max_player(game, turn):
-    return min_max_alpha_beta(game, turn, 2)[1]
+    return min_max_alpha_beta(game, turn, 4)[1]
 
 

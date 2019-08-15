@@ -47,6 +47,7 @@ class Checkers:
         self.must_capture = False
         self.count_movement = 0
         self.win = 0
+        self.moves = []
 
     def is_empty(self, field):
         return True if self.board_state[field[0], field[1]] == 0 else False
