@@ -5,7 +5,7 @@ import random
 import min_max
 from datetime import datetime
 import sys
-from ai import DQN, decoding_move, ReplayMemory, random_play, encoding_move, game
+from ai import DQN, decoding_move, ReplayMemory, random_play, encoding_move, GAME
 
 MIN_EXPERIENCES = 50
 
@@ -14,26 +14,26 @@ def play_one(total_t, experience_replay_buffer, model1, model2, epsilon):
     t0 = datetime.now()
 
     # Reset the environment
-    game.reset()
+    GAME.reset()
 
     total_time_training = 0
     num_steps_in_episode = 0
     episode_reward = 0
 
-    while not game.win:
+    while not GAME.win:
 
         # Take action
-        if game.turn == 1:
-            game.available_moves()
+        if GAME.turn == 1:
+            GAME.available_moves()
             states, _, _, _, _ = experience_replay_buffer.get_minibatch()
             move = model1.sample_action(states, epsilon)
-            game.move(decoding_move(move))
-        if game.win == 0 and game.turn == -1:
-            game.available_moves()
+            GAME.move(decoding_move(move))
+        if GAME.win == 0 and GAME.turn == -1:
+            GAME.available_moves()
             states, _, _, _, _ = experience_replay_buffer.get_minibatch()
             move = model2.sample_action(states, epsilon)
-            game.move(decoding_move(move))
-        reward = game.win
+            GAME.move(decoding_move(move))
+        reward = GAME.win
 
         episode_reward += reward
 
@@ -46,7 +46,7 @@ def play_one(total_t, experience_replay_buffer, model1, model2, epsilon):
 
 
 if __name__ == '__main__':
-    input_size = game.board_state.shape
+    input_size = GAME.board_state.shape
     action_space_size = 32 * 32
     conv_layer_sizes = [(128, 2, 1), (128, 2, 1), (128, 2, 1)]
     hidden_layer_sizes = [256]
@@ -67,25 +67,25 @@ if __name__ == '__main__':
         model1.set_session(session)
         model2.set_session(session)
         session.run(tf.global_variables_initializer())
-        game.reset()
+        GAME.reset()
 
         wins = 0
         for i in range(MIN_EXPERIENCES):
-            game.available_moves()
-            if game.win != 0:
-                game.reset()
-            move = random_play(game)
+            GAME.available_moves()
+            if GAME.win != 0:
+                GAME.reset()
+            move = random_play(GAME)
             action = encoding_move(move)
-            game.move(move)
-            if game.win == 0:
-                new_game = Checkers()
-                new_game.board_state = np.array(game.board_state)
-                new_game.turn = game.turn
-                new_game.moves_queen_with_out_capture = game.moves_queen_with_out_capture
-                move = min_max.min_max_player(new_game, new_game.turn)
-                game.move(move)
-            reward = game.win
-            experience_replay_buffer.add_experince(action, game.board_state, reward)
+            GAME.move(move)
+            if GAME.win == 0:
+                new_GAME = Checkers()
+                new_GAME.board_state = np.array(GAME.board_state)
+                new_GAME.turn = GAME.turn
+                new_GAME.moves_queen_with_out_capture = GAME.moves_queen_with_out_capture
+                move = min_max.min_max_player(new_GAME, new_GAME.turn)
+                GAME.move(move)
+            reward = GAME.win
+            experience_replay_buffer.add_experince(action, GAME.board_state, reward)
 
         t0 = datetime.now()
         for i in range(num_episodes):
