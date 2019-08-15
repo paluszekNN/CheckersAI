@@ -7,7 +7,11 @@ from datetime import datetime
 import sys
 
 
-game = Checkers()
+GAME = Checkers()
+INPUT_SIZE = GAME.board_state.shape
+ACTION_SPACE_SIZE= 32 * 32
+CONV_LAYER_SIZE = [(128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1)]
+HIDDEN_LAYER_SIZE = [64]
 MAX_EXPERIENCES = 500000
 MIN_EXPERIENCES = 50000
 TARGET_UPDATE_PERIOD = 100
@@ -125,9 +129,9 @@ class DQN:
         params = self.session.run(params)
         np.savez('tf_dqn_weights'+str(i)+'.npz', *params)
 
-    def load(self):
+    def load(self, path):
         params = [t for t in tf.trainable_variables() if t.name.startswith(self.name)]
-        npz = np.load('tf_dqn_weights.npz')
+        npz = np.load(path)
         ops = []
         for p, (_, v) in zip(params, npz.iteritems()):
             ops.append(p.assign(v))
@@ -146,12 +150,12 @@ class DQN:
 
     def sample_action(self, states, eps):
         if np.random.random() < eps:
-            move = random_play(game)
+            move = random_play()
             return encoding_move(move)
         else:
             p = self.predict(states)[0]
-            game.available_moves()
-            moves = game.moves
+            GAME.available_moves()
+            moves = GAME.moves
             list_move = []
             indices = []
             for mov in moves:
@@ -162,8 +166,8 @@ class DQN:
             return move
 
 
-def transform_board(game):
-    board = game.board_state.flatten()
+def transform_board():
+    board = GAME.board_state.flatten()
 
     even = -1
     for i in range(len(board)-1, -1, -1):
@@ -173,15 +177,15 @@ def transform_board(game):
             board = np.delete(board, [i])
         if i % 8 == 0:
             even *= -1
-    board = np.append(board, game.turn)
-    board = np.append(board, game.must_capture*1.)
-    board = np.append(board, game.moves_queen_with_out_capture)
+    board = np.append(board, GAME.turn)
+    board = np.append(board, GAME.must_capture*1.)
+    board = np.append(board, GAME.moves_queen_with_out_capture)
     return board
 
 
-def random_play(game):
-    game.available_moves()
-    moves = game.moves
+def random_play():
+    GAME.available_moves()
+    moves = GAME.moves
     return random.choice(moves)
 
 
@@ -224,30 +228,30 @@ def decoding_move(move):
     return X_row, X_col, Y_row, Y_col
 
 
-def play(game, pmodel, vmodel, gamma):
-    game.reset()
-    board = transform_board(game)
+def play(pmodel, vmodel, gamma):
+    GAME.reset()
+    board = transform_board()
     reward = 0
 
-    while not game.win:
-        game.available_moves()
-        move = pmodel.sample_action(board, game.moves)
+    while not GAME.win:
+        GAME.available_moves()
+        move = pmodel.sample_action(board, GAME.moves)
         prev_board = board
-        if game.turn == 1:
-            game.move(decoding_move(move))
-            board = transform_board(game)
+        if GAME.turn == 1:
+            GAME.move(decoding_move(move))
+            board = transform_board()
         else:
             new_game = Checkers()
-            new_game.board_state = np.array(game.board_state)
-            new_game.turn = game.turn
-            new_game.moves_queen_with_out_capture = game.moves_queen_with_out_capture
+            new_game.board_state = np.array(GAME.board_state)
+            new_game.turn = GAME.turn
+            new_game.moves_queen_with_out_capture = GAME.moves_queen_with_out_capture
             move = min_max.min_max_player(new_game, new_game.turn)
-            game.move(move)
-            reward = game.win
+            GAME.move(move)
+            reward = GAME.win
             if not reward:
                 continue
 
-        reward = game.win
+        reward = GAME.win
         V_next = vmodel.predict(board)
         G = reward + gamma * np.max(V_next)
         advantage = G - vmodel.predict(prev_board)
@@ -271,19 +275,19 @@ def learn(model, target_model, experience_replay_buffer, gamma):
     return loss
 
 
-def play_one(game, total_t, experience_replay_buffer, model, target_model, gamma, epsilon, epsilon_change, epsilon_min):
+def play_one(total_t, experience_replay_buffer, model, target_model, gamma, epsilon, epsilon_change, epsilon_min):
     t0 = datetime.now()
 
     # Reset the environment
-    game.reset()
-    board = game.board_state
+    GAME.reset()
+    board = GAME.board_state
     loss = None
 
     total_time_training = 0
     num_steps_in_episode = 0
     episode_reward = 0
 
-    while not game.win:
+    while not GAME.win:
 
         # Update target network
         if total_t % TARGET_UPDATE_PERIOD == 0:
@@ -292,27 +296,26 @@ def play_one(game, total_t, experience_replay_buffer, model, target_model, gamma
             total_t, TARGET_UPDATE_PERIOD))
 
         # Take action
-        if game.turn == 1:
-            game.available_moves()
+        if GAME.turn == 1:
+            GAME.available_moves()
             states, _, _, _, _ = experience_replay_buffer.get_minibatch()
-            move = model.sample_action(states, epsilon)
-            prev_board = board
-            game.move(decoding_move(move))
-        if game.win == 0 and game.turn == -1:
+            action = model.sample_action(states, epsilon)
+            GAME.move(decoding_move(action))
+        if GAME.win == 0 and GAME.turn == -1:
             new_game = Checkers()
-            new_game.board_state = np.array(game.board_state)
-            new_game.turn = game.turn
-            new_game.moves_queen_with_out_capture = game.moves_queen_with_out_capture
+            new_game.board_state = np.array(GAME.board_state)
+            new_game.turn = GAME.turn
+            new_game.moves_queen_with_out_capture = GAME.moves_queen_with_out_capture
             move = min_max.min_max_player(new_game, new_game.turn)
-            game.move(move)
-        reward = game.win
-        board = game.board_state
+            GAME.move(move)
+        reward = GAME.win
+        board = GAME.board_state
 
         # Compute total reward
         episode_reward += reward
 
         # Save the latest experience
-        experience_replay_buffer.add_experince(action, game.board_state, reward)
+        experience_replay_buffer.add_experince(action, GAME.board_state, reward)
 
         # Train the model, keep track of time
         t0_2 = datetime.now()
@@ -332,54 +335,48 @@ def play_one(game, total_t, experience_replay_buffer, model, target_model, gamma
 
 
 if __name__ == '__main__':
-    input_size = game.board_state.shape
-    action_space_size = 32 * 32
-    conv_layer_sizes = [(128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1)]
-    hidden_layer_sizes = [256]
-
     gamma = 0.99
     batch_sz = 32
     num_episodes = 10000
     total_t = 0
 
-    experience_replay_buffer = ReplayMemory(input_size)
+    experience_replay_buffer = ReplayMemory(INPUT_SIZE)
     episode_rewards = np.zeros(num_episodes)
 
     epsilon = 1.0
     epsilon_min = 0.001
     epsilon_change = (epsilon - epsilon_min) / num_episodes
 
-    model = DQN(input_size, action_space_size, conv_layer_sizes, hidden_layer_sizes, 'model')
-    target_model = DQN(input_size, action_space_size, conv_layer_sizes, hidden_layer_sizes, 'target_model')
+    model = DQN(INPUT_SIZE, ACTION_SPACE_SIZE, CONV_LAYER_SIZE, HIDDEN_LAYER_SIZE, 'model')
+    target_model = DQN(INPUT_SIZE, ACTION_SPACE_SIZE, CONV_LAYER_SIZE, HIDDEN_LAYER_SIZE, 'target_model')
     with tf.Session() as session:
-        # model.load()
+        # model.load('tf_dqn_weights1.npz')
         model.set_session(session)
         target_model.set_session(session)
         session.run(tf.global_variables_initializer())
-        game.reset()
+        GAME.reset()
 
         wins = 0
         for i in range(MIN_EXPERIENCES):
-            game.available_moves()
-            if game.win != 0:
-                game.reset()
-            move = random_play(game)
+            GAME.available_moves()
+            if GAME.win != 0:
+                GAME.reset()
+            move = random_play()
             action = encoding_move(move)
-            game.move(move)
-            if game.win == 0:
+            GAME.move(move)
+            if GAME.win == 0:
                 new_game = Checkers()
-                new_game.board_state = np.array(game.board_state)
-                new_game.turn = game.turn
-                new_game.moves_queen_with_out_capture = game.moves_queen_with_out_capture
+                new_game.board_state = np.array(GAME.board_state)
+                new_game.turn = GAME.turn
+                new_game.moves_queen_with_out_capture = GAME.moves_queen_with_out_capture
                 move = min_max.min_max_player(new_game, new_game.turn)
-                game.move(move)
-            reward = game.win
-            experience_replay_buffer.add_experince(action, game.board_state, reward)
+                GAME.move(move)
+            reward = GAME.win
+            experience_replay_buffer.add_experince(action, GAME.board_state, reward)
 
         t0 = datetime.now()
         for i in range(num_episodes):
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon = play_one(
-                game,
                 total_t,
                 experience_replay_buffer,
                 model,
@@ -401,7 +398,7 @@ if __name__ == '__main__':
                   "Epsilon:", "%.3f" % epsilon
                   )
             sys.stdout.flush()
-            if i % 500 == 0 and i != 0:
+            if i % 1 == 0 and i != 0:
                 model.save(i)
         print("Total duration:", datetime.now() - t0)
 
