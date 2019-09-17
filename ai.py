@@ -10,15 +10,16 @@ import sys
 GAME = Checkers()
 INPUT_SIZE = GAME.board_state.shape
 ACTION_SPACE_SIZE= 32 * 32
-CONV_LAYER_SIZE = [(128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1), (128, 1, 1)]
+CONV_LAYER_SIZE = [(32, 3, 3)]
 HIDDEN_LAYER_SIZE = [64]
 MAX_EXPERIENCES = 500000
-MIN_EXPERIENCES = 50000
+MIN_EXPERIENCES = 100
 TARGET_UPDATE_PERIOD = 100
+AGENT_LENGTH_HISTORY = 10
 
 
 class ReplayMemory:
-    def __init__(self, input_size, agent_history_length=1, batch_size=32, size=MAX_EXPERIENCES):
+    def __init__(self, input_size, agent_history_length=AGENT_LENGTH_HISTORY, batch_size=32, size=MAX_EXPERIENCES):
         self.size = size
         self.input_size = input_size
         self.agent_history_length = agent_history_length
@@ -88,22 +89,45 @@ class DQN:
         self.name = name
 
         with tf.variable_scope(name):
-            self.input = tf.placeholder(tf.float32, shape=(None, 1, input_size[0], input_size[1]), name='input')
+            self.input = tf.placeholder(tf.float32, shape=(None, AGENT_LENGTH_HISTORY, input_size[0], input_size[1]), name='input')
 
             self.G = tf.placeholder(tf.float32, shape=(None,), name='G')
             self.actions = tf.placeholder(tf.int32, shape=(None,), name='actions')
 
             Z = self.input / 2.
             for num_output_filters, filter_size, pool_size in conv_layer_sizes:
-                Z = tf.layers.conv2d(Z, num_output_filters, filter_size, activation=tf.nn.relu)
+                Z = tf.layers.conv2d(Z, num_output_filters, (filter_size, pool_size), activation=tf.nn.relu)
                 Z = tf.layers.batch_normalization(Z, axis=1)
                 Z = tf.nn.leaky_relu(Z)
 
-            Z = tf.layers.flatten(Z)
-            for layer_size in hidden_layer_sizes:
-                Z = tf.layers.dense(Z, layer_size)
+            for _ in range(10):
+                input = Z
+                Z = tf.layers.conv2d(Z, 32, (3, 3), padding='same')
+                Z = tf.layers.batch_normalization(Z, axis=1)
+                Z = tf.nn.relu(Z)
+                Z = tf.keras.layers.add([input, Z])
+                Z = tf.nn.leaky_relu(Z)
 
-            self.predict_op = tf.layers.dense(Z, action_space_size)
+            ph = tf.layers.conv2d(Z, 2, (1, 1), activation=tf.nn.relu)
+            ph = tf.layers.batch_normalization(ph)
+            ph = tf.nn.leaky_relu(ph)
+            ph = tf.layers.flatten(ph)
+            ph = tf.layers.dense(ph, action_space_size, activation=tf.nn.relu)
+
+            vh = tf.layers.conv2d(Z, 1, (1, 1), activation=tf.nn.relu)
+            vh = tf.layers.batch_normalization(vh)
+            vh = tf.nn.leaky_relu(vh)
+            vh = tf.layers.flatten(vh)
+            vh = tf.layers.dense(vh, 20, use_bias=False, activation=tf.nn.relu)
+            vh = tf.nn.leaky_relu(vh)
+            vh = tf.layers.dense(vh, 1, activation=tf.nn.tanh)
+
+            # Z = tf.layers.flatten(Z)
+            # for layer_size in hidden_layer_sizes:
+            #     Z = tf.layers.dense(Z, layer_size)
+
+            # self.predict_op = tf.layers.dense(Z, action_space_size)
+            self.predict_op = ph
 
             selected_action_values = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions, action_space_size), reduction_indices=[1])
 
